@@ -31,6 +31,16 @@ Open this in your browser.
 http://localhost:5000/
 ```
 
+This gives a domain suggestion.
+```
+Suggest a domain name related to bikes and coffee in cupertino. It should be snazzy.
+```
+
+This gives you the domain availability.
+```
+Is mugglepapa27.net available?
+```
+
 To test
 ```
 python3 -m unittest *.py
