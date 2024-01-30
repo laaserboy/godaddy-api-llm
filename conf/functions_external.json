@@ -1,0 +1,42 @@
+[
+  {
+    "function": "call_availcheck",
+    "description": "check availability of a domain name",
+    "parameters": [
+      "domain"
+    ]
+  },
+  {
+    "function": "call_suggest",
+    "description": "suggest a different domain name related to the given domain name",
+    "parameters": [
+      "domain"
+    ]
+  },
+  {
+    "function": "call_add_to_cart",
+    "description": "Add a domain name to cart. Do this if the customer asks to add a domain name to cart.",
+    "parameters": [
+      "domain"
+    ]
+  },
+  {
+    "function": "call_purchase",
+    "description": "Purchase domain names in the cart.",
+    "parameters": [
+      "domain"
+    ]
+  },
+  {
+    "function": "call_get_order_id",
+    "description": "Get the order ID for the user.",
+    "parameters": []
+  },
+  {
+    "function": "ask_question_or_comment",
+    "description": "ask question of user or make a comment if you are not sure what to do",
+    "parameters": [
+      "question"
+    ]
+  }
+]
