@@ -1,7 +1,7 @@
 # godaddy-api-llm
 A large language model interface to Godaddy public APIs
 
-## This code acts as an interface between an LLM and Godaddy's public API.
+This code acts as an interface between an LLM and Godaddy's public API.
 
 # To run
 
@@ -12,10 +12,17 @@ export GD_MODEL_DIR=<path to gguf model file>
 export GD_APP_SECRET_KEY=<random text for flask>
 ```
 
+
 Change directory
 
 ```
 cd godaddy-api-llm/py/godaddy_api_llm
+```
+
+Install dependencies
+
+```
+pip3 install -r requirements.txt
 ```
 
 Start server
