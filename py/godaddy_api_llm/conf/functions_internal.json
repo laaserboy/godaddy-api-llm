@@ -1,0 +1,12 @@
+        [
+          {
+            "function": "call_availcheck",
+            "description": "check availability of a domain name",
+            "parameters": ["domain"]
+          },
+          {
+            "function": "call_suggest",
+            "description": "suggest a different domain name related to the given domain name",
+            "parameters": ["domain"]
+          }
+        ]
