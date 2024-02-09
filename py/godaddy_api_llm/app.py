@@ -13,8 +13,12 @@ from flask import Flask, render_template, session
 
 import gd_fun
 
-with open("../../conf/app_conf.json", "r", encoding='utf-8') as f:
-    config = json.load(f)
+def get_config():
+    with open("conf/app_conf.json", "r", encoding='utf-8') as f:
+        config = json.load(f)
+    return config
+
+config = get_config()
 
 # More config from env
 model_dir = os.getenv("GD_MODEL_DIR")
@@ -30,6 +34,9 @@ def safe_json_loads(json_str, default_val):
         response = json.loads(json_str)
     except json.decoder.JSONDecodeError:
         response = default_val
+    except TypeError:
+        response = default_val
+        logging.error(f'Bad JSON {json_str}')
     return response
 
 def get_message_response(prompt_info):
@@ -49,13 +56,22 @@ def get_message_response(prompt_info):
     url = f"{proto}://{hostname}:5001{path}"
     data = {'prompt': prompt}
     timeout = 30.0
-    response_first = gd_fun.post_data(url, headers, data, timeout)
-    response_first_dict = response_first.json()
-    response_first_split = response_first_dict['response'].split('\n\n')
-
-    if len(response_first_split) == 1:
-        response_first_split = response_first_split[0].split('#')
-    model_response = ''
+    print(f'CONFIG IS {config}')
+    server_name = config['chat_server']
+    if server_name == 'gpt4all':
+        response_gpt4all = gd_fun.get_gpt4all_model_res(prompt)
+        response_first_split = [json.dumps(response_gpt4all)]
+    elif server_name == 'godaddy_llm':
+        response_first = gd_fun.post_data(url, headers, data, timeout)
+        response_first_split = []
+        if response_first != {}:
+            response_first_dict = response_first.json()
+            response_first_split = response_first_dict['response'].split('\n\n')
+        else:
+            logging.error('Check prompt server is up.')
+        if len(response_first_split) == 1:
+            response_first_split = response_first_split[0].split('#')
+    model_response = {}
     if len(response_first_split) > 0:
         logging.info(response_first_split[0])
         default_val = {'function': 'error'}
@@ -114,14 +130,14 @@ def call_availcheck(model_response, gd_key, gd_secret):
     '''Check domain for availability'''
     domain_name = model_response['parameters']['domain']
     response_avail = gd_fun.get_domain_availability(domain_name, gd_key, gd_secret)
-    response_dict = response_avail.json()
-    response_json = json.dumps(response_dict)
+    response_json = '{}'
+    if response_avail != {}:
+        response_dict = response_avail.json()
+        response_json = json.dumps(response_dict)
     second_preamble = 'The domain availcheck result was this.'
     second_suffix = 'What is a summary of the result in prose?'
     second_response_text = f'{second_preamble}\n\'{response_json}\'\n{second_suffix}'
     path = '/prompt'
-    #extra_headers = {}
-    #params = {'prompt': second_response_text}
     headers = {}
     proto = 'http'
     hostname = 'localhost'
@@ -143,8 +159,6 @@ def call_suggest(model_response, gd_key, gd_secret):
     suffix3 = ' Ask me if I would like to buy it. Respond in prose.'
     second_response_text = f'{preamble2}\n\'{response_suggest}\'\n{suffix2}{suffix3}'
     path = '/prompt'
-    #extra_headers = {}
-    #params = {'prompt': second_response_text}
     headers = {}
     proto = 'http'
     hostname = 'localhost'
