@@ -131,12 +131,8 @@ def get_ai_response(model_name, question):
     if model_name == 'open_ai':
         llm = ChatOpenAI()
     elif model_name == 'mistral':
+        pass
         #llm = GPT4All(model=local_path, callbacks=callbacks, verbose=True, allow_download=False)
-        #llm = GPT4All(model=local_path, callbacks=callbacks, verbose=True)
-        #if 'llm' in config:
-        #    llm = config['llm']
-        #else:
-        #    config['llm'] = llm
     else:
         model_name = ''
     if model_name != '':

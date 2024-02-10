@@ -5,6 +5,7 @@
 import requests
 import unittest
 import json
+from unittest import TestCase
 from unittest.mock import patch, Mock
 import gd_fun
 
@@ -33,6 +34,41 @@ class TestSuggest(unittest.TestCase):
         response = model_api_call()
         self.assertEqual(response['expected_total'], 65510000)
         self.assertIn("coffee", response['response'])
+
+class TestGetGpt4allModelRes(TestCase):
+    def setUp(self) -> None:
+        prompt = 'How is the weather today?'
+        self.api_base = 'http://localhost:4891/v1'
+        self.model = 'mistral-7b-openorca.Q4_0'
+        self.headers = {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer YOUR_API_KEY_UNNECESSARY"
+        }
+        self.data = {
+            "model": self.model,
+            "max_tokens": 50,
+            "temperature": 0.28,
+            "top_p": 0.95,
+            "n": 1,
+            "echo": False,
+            "stream": False,
+            "messages": [
+                {"role": "system", "content": gd_fun.SESSION_DESCRIPTION},
+                {"role": "user", "content": "Is the domain name duggles.com available?"},
+                {"role": "assistant", "content": '''{ "function": "call_availcheck", "parameters": { "domain": "duggles.com" } }'''
+                 },
+                {"role": "user", "content": prompt}
+            ]
+        }
+
+    @patch('requests.post')
+    def test_get_gpt4all_model_res(self, mock_request):
+        response = Mock()
+        response.json.return_value = {
+            'choices': [{'message': {'content': '{ "function": "call_availcheck", "parameters": { "domain": "duggles.com" } }'}}]
+        }
+        mock_request.return_value = response
+        self.assertEqual(gd_fun.get_gpt4all_model_res(''), {'function': 'call_availcheck', 'parameters': {'domain': 'duggles.com'}})
 
 def get_headers():
     headers = {
@@ -117,6 +153,8 @@ class TestGetPage(unittest.TestCase):
 
             self.assertIsInstance(response, dict)
             self.assertIn('WARNING:root:Oops Connection error', log.output)
+
+
 
 if __name__ == '__main__':
     unittest.main()
