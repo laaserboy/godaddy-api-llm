@@ -56,8 +56,11 @@ def get_message_response(prompt_info):
     url = f"{proto}://{hostname}:5001{path}"
     data = {'prompt': prompt}
     timeout = 30.0
-    print(f'CONFIG IS {config}')
+    #print(f'CONFIG IS {config}')
     server_name = config['chat_server']
+    #answer_rag = gd_fun.load_rag_and_respond(prompt)
+    #print(f'ANSWER RAG {answer_rag}')
+
     if server_name == 'gpt4all':
         response_gpt4all = gd_fun.get_gpt4all_model_res(prompt)
         response_first_split = [json.dumps(response_gpt4all)]

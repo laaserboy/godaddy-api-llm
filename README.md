@@ -10,6 +10,7 @@ export GD_KEY=<your Godaddy API key>
 export GD_SECRET=<your Godady API secret>
 export GD_MODEL_DIR=<path to gguf model file>
 export GD_APP_SECRET_KEY=<random text for flask>
+export GD_RAG_DIR=<directory with JSON RAG document>
 ```
 
 
