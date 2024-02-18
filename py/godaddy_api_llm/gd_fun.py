@@ -79,18 +79,20 @@ def get_gpt4all_model_res(prompt):
         "messages": [
             {"role": "system", "content": SESSION_DESCRIPTION},
             {"role": "user", "content": "Is the domain name duggles.com available?"},
-            {"role": "assistant", "content": '''{ "function": "call_availcheck", "parameters": { "domain": "duggles.com" } }'''
+            {"role": "assistant", "content":
+                ('''{ "function": "call_availcheck", "parameters": ''' +
+                 '''{ "domain": "duggles.com" } }''')
             },
             {"role": "user", "content": prompt}
         ]
     }
 
 
-    response = requests.post(api_base + '/chat/completions', headers=headers, json=data)
+    response = requests.post(api_base + '/chat/completions', headers=headers, json=data, timeout=20)
 
     response_dict = response.json()
     description = response_dict['choices'][0]['message']['content']
-    response_description = json.loads(description)
+    response_description = safe_json_loads(description, '')
     return response_description
 
 def get_domain_availability(domain_name, gd_key, gd_secret):
@@ -140,3 +142,11 @@ def post_data(url, headers, data, timeout):
         logging.warning('Requests ConnectionError')
     return response
 
+def safe_json_loads(text, default_val):
+    '''Return default if JSON load fails'''
+    json_dict = default_val
+    try:
+        json_dict = json.loads(text)
+    except json.decoder.JSONDecodeError:
+        json_dict = {}
+    return json_dict

@@ -7,6 +7,7 @@ WSGI app in front of flask python code
 import os
 import json
 import logging
+import requests
 
 from flask import request
 from flask import Flask, render_template, session
@@ -14,9 +15,10 @@ from flask import Flask, render_template, session
 import gd_fun
 
 def get_config():
-    with open("conf/app_conf.json", "r", encoding='utf-8') as f:
-        config = json.load(f)
-    return config
+    '''Grab config from file'''
+    with open("conf/app_conf.json", "r", encoding='utf-8') as config_file:
+        app_config = json.load(config_file)
+    return app_config
 
 config = get_config()
 
@@ -36,7 +38,7 @@ def safe_json_loads(json_str, default_val):
         response = default_val
     except TypeError:
         response = default_val
-        logging.error(f'Bad JSON {json_str}')
+        logging.error('Bad JSON %s', json_str)
     return response
 
 def get_message_response(prompt_info):
@@ -56,10 +58,7 @@ def get_message_response(prompt_info):
     url = f"{proto}://{hostname}:5001{path}"
     data = {'prompt': prompt}
     timeout = 30.0
-    #print(f'CONFIG IS {config}')
     server_name = config['chat_server']
-    #answer_rag = gd_fun.load_rag_and_respond(prompt)
-    #print(f'ANSWER RAG {answer_rag}')
 
     if server_name == 'gpt4all':
         response_gpt4all = gd_fun.get_gpt4all_model_res(prompt)
@@ -68,12 +67,21 @@ def get_message_response(prompt_info):
         response_first = gd_fun.post_data(url, headers, data, timeout)
         response_first_split = []
         if response_first != {}:
-            response_first_dict = response_first.json()
-            response_first_split = response_first_dict['response'].split('\n\n')
+            response_first_dict = {}
+            try:
+                response_first_dict = response_first.json()
+            except requests.exceptions.JSONDecodeError:
+                logging.error('JSON Decode error %s', response_first.text)
+                response_first_dict = {}
+            response_first_split = ['']
+            if 'response' in response_first_dict:
+                response_first_split = response_first_dict['response'].split('\n\n')
         else:
             logging.error('Check prompt server is up.')
         if len(response_first_split) == 1:
             response_first_split = response_first_split[0].split('#')
+        if response_first_split == ['']:
+            response_first_split = [response_first.text]
     model_response = {}
     if len(response_first_split) > 0:
         logging.info(response_first_split[0])
@@ -82,7 +90,7 @@ def get_message_response(prompt_info):
     function_name = 'error'
     if 'function' in model_response:
         function_name = model_response['function']
-    if function_name == 'call_availcheck':
+    if function_name == 'call_available':
         response_second = call_availcheck(model_response, gd_key,
             gd_secret)
     elif function_name == 'call_suggest':
@@ -90,6 +98,8 @@ def get_message_response(prompt_info):
             gd_secret)
     elif function_name == 'ask_question_or_comment':
         response_second = ask_question(model_response)
+    if function_name == 'error':
+        response_second = response_first_split[0]
     message = {'response': response_second, 'order_id': order_id,
         'expected_total': expected_total}
     return message
@@ -149,12 +159,16 @@ def call_availcheck(model_response, gd_key, gd_secret):
     timeout = 30.0
     response_second = gd_fun.post_data(url, headers, data, timeout)
 
-    response_second_text = response_second.json()
+    response_second_text = ''
+    try:
+        response_second_text = response_second.json()
+    except requests.exceptions.JSONDecodeError:
+        response_second_text = response_second.text
     return response_second_text
 
 def call_suggest(model_response, gd_key, gd_secret):
     '''Suggest domain names'''
-    domain_name = model_response['parameters']['domain']
+    domain_name = model_response['parameters']['query']
     city = 'Cupertino'
     response_suggest = gd_fun.get_suggestions(domain_name, city, gd_key, gd_secret)
     preamble2 = 'The domain suggestion result was this.'
@@ -169,8 +183,12 @@ def call_suggest(model_response, gd_key, gd_secret):
     data = {'prompt': second_response_text}
     timeout = 30.0
     response_second = gd_fun.post_data(url, headers, data, timeout)
-
-    response_second_text = response_second.json()
+    response_second_text = ''
+    if response_second.text != '':
+        try:
+            response_second_text = response_second.json()
+        except requests.exceptions.JSONDecodeError:
+            response_second_text = response_second.text
     return response_second_text
 
 def ask_question(model_response):
