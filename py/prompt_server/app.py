@@ -47,6 +47,7 @@ with open("../godaddy_api_llm/conf/app_conf.json", "r", encoding='utf-8') as f:
 config['model_dir'] = os.getenv("GD_MODEL_DIR")
 config['secret_key'] = os.getenv("FLASK_SECRET_KEY")
 config['rag_dir'] = os.getenv("GD_RAG_DIR")
+config['use_user_rag'] = 'false'
 
 app = Flask(__name__)
 app.secret_key = config['app_secret_key']
@@ -126,11 +127,6 @@ def safe_json_loads(json_str, default_val):
         response = default_val
     return response
 
-@app.route('/', methods=['GET'])
-def get_root():
-    '''Present test page'''
-    return render_template('home.html')
-
 @app.route('/prompt', methods=['GET', 'POST'])
 def get_prompt_response():
     '''send one answer based on the prompt'''
@@ -142,7 +138,20 @@ def get_prompt_response():
     )
     return response_out
 
+@app.route('/set_rag', methods=['POST'])
+def set_rag_file():
+    '''send one answer based on the prompt'''
+    response = {'success': True}
+    config['use_user_rag'] = 'true'
+    response_out = app.response_class(
+        response=json.dumps(response),
+        status=200,
+        mimetype='application/json'
+    )
+    return response_out
+
 def get_rag_response(rag_request):
+    '''Get response for a RAG-infused model. The RAG document, here is in JSON form. It shows functions that can run.'''
     prompt = SESSION_DESCRIPTION
     model_name = 'mistral'
     post_dict = {}
@@ -213,10 +222,11 @@ def metadata_func(record: dict, metadata: dict) -> dict:
     metadata["summary"] = record.get("summary")
     return metadata
 
+# SHOULD go to file
 SESSION_DESCRIPTION_RAG = '''You are an API expert. You only answer in JSON. Here is an example. When a user asks for an API to suggest domain names about blue cats, reply like this.
 {
   "function": "call_suggest",
-  "path": "/v1/domain/suggest",
+  "path": "/v1/domains/suggest",
   "parameters": {"query": "blue cats"}
 }
 When a user asks, I want the next domain notification for customerid eef323-eeff583-ffee473 and x-request-id 373733ef, respond like this.
@@ -266,6 +276,8 @@ def load_rag_and_respond(user_prompt, session_description, conf):
         answer = answer_cached.decode('utf-8')
     else:
         documents = {}
+        if conf['use_user_rag'] == 'true':
+            file_path=f'{conf["rag_dir"]}/chat_user.json',
         loader = JSONLoader(
             file_path=f'{conf["rag_dir"]}/chat_subscriptions.json',
             jq_schema='.messages[].content',

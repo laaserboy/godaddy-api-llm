@@ -2,11 +2,13 @@
           {
             "function": "call_availcheck",
             "description": "check availability of a domain name",
+            "path": "/v1/domains/available",
             "parameters": ["domain"]
           },
           {
             "function": "call_suggest",
             "description": "suggest a different domain name related to the given domain name",
+            "path": "/v1/domains/suggest",
             "parameters": ["domain"]
           }
         ]
