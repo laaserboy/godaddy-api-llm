@@ -127,6 +127,11 @@ def safe_json_loads(json_str, default_val):
         response = default_val
     return response
 
+@app.route('/', methods=['GET'])
+def get_root():
+    '''Present test page'''
+    return render_template('home.html')
+
 @app.route('/prompt', methods=['GET', 'POST'])
 def get_prompt_response():
     '''send one answer based on the prompt'''
