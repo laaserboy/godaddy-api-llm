@@ -10,7 +10,6 @@ import time
 
 import redis
 
-#import asyncio
 from flask import Flask, Response
 
 from flask import request
@@ -23,7 +22,6 @@ from langchain.memory import ConversationBufferMemory
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
-#from langchain_core.prompts import ChatPromptTemplate
 
 from langchain_community.llms import GPT4All
 from langchain_community.document_loaders import JSONLoader
@@ -31,9 +29,6 @@ from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings.sentence_transformer import (
     SentenceTransformerEmbeddings,
     )
-
-#from openai import OpenAI
-#from openai import AsyncOpenAI
 
 documents_gl = {}
 embedding_function_gl = {}
@@ -46,7 +41,9 @@ with open("../godaddy_api_llm/conf/app_conf.json", "r", encoding='utf-8') as f:
 # Get configs from env
 config['model_dir'] = os.getenv("GD_MODEL_DIR")
 config['secret_key'] = os.getenv("FLASK_SECRET_KEY")
-config['rag_dir'] = os.getenv("GD_RAG_DIR")
+config['rag_system_dir'] = os.getenv("GD_RAG_SYSTEM_DIR")
+config['rag_user_dir'] = os.getenv("GD_RAG_USER_DIR")
+config['rag_dir'] = config['rag_system_dir'] # INITIAL VALUE
 config['use_user_rag'] = 'false'
 
 app = Flask(__name__)
@@ -148,6 +145,7 @@ def set_rag_file():
     '''send one answer based on the prompt'''
     response = {'success': True}
     config['use_user_rag'] = 'true'
+    config["rag_dir"] = config['rag_user_dir']
     response_out = app.response_class(
         response=json.dumps(response),
         status=200,
@@ -281,20 +279,22 @@ def load_rag_and_respond(user_prompt, session_description, conf):
         answer = answer_cached.decode('utf-8')
     else:
         documents = {}
-        if conf['use_user_rag'] == 'true':
-            file_path=f'{conf["rag_dir"]}/chat_user.json',
         loader = JSONLoader(
-            file_path=f'{conf["rag_dir"]}/chat_subscriptions.json',
+            file_path=f'{config["rag_dir"]}/chat_swagger_reduced.json',
             jq_schema='.messages[].content',
             metadata_func=metadata_func,
             text_content=False)
         if documents_gl != {}:
             documents = documents_gl
         else:
-            documents = loader.load_and_split()
+            try:
+                documents = loader.load_and_split()
+            except ValueError:
+                logging.error('Cannot load swagger JSON')
+                documents = []
             documents_gl = documents
         llm = GPT4All(
-            model=f'{conf["model_dir"]}/mistral-7b-openorca.Q4_0.gguf'
+            model=f'{config["model_dir"]}/mistral-7b-openorca.Q4_0.gguf'
         )
         session_description_rag = session_description.replace('{', '{{')
         session_description_rag = session_description_rag.replace('}', '}}')
@@ -316,26 +316,30 @@ def load_rag_and_respond(user_prompt, session_description, conf):
         else:
             embedding_function = embedding_function_gl
 
-        vectorstore = Chroma.from_documents(documents=docs_split, embedding=embedding_function)
+        try:
+            vectorstore = Chroma.from_documents(documents=docs_split, embedding=embedding_function)
+        except ValueError:
+            logging.error('Oops vectorstore value error')
+            vectorstore = {}
+        if vectorstore != {}:
+            memory = ConversationBufferMemory(
+                memory_key="chat_history",
+                return_messages=False
+            )
 
-        memory = ConversationBufferMemory(
-            memory_key="chat_history",
-            return_messages=False
-        )
+            qa_chain = ConversationalRetrievalChain.from_llm(
+                llm,
+                retriever=vectorstore.as_retriever(),
+                memory=memory
+            )
 
-        qa_chain = ConversationalRetrievalChain.from_llm(
-            llm,
-            retriever=vectorstore.as_retriever(),
-            memory=memory
-        )
-
-        # next line 15 seconds
-        result = qa_chain({"question": session_description_rag + user_prompt})
-        answer = result['answer']
-        # BECAUSE langchain cannot figure out a simple template
-        answer = answer.replace('{{', '{')
-        answer = answer.replace('}}', '}')
-        safe_redis_client_set(f'chain_{prompt_key}', answer)
+            # next line 15 seconds
+            result = qa_chain({"question": session_description_rag + user_prompt})
+            answer = result['answer']
+            # BECAUSE langchain cannot figure out a simple template
+            answer = answer.replace('{{', '{')
+            answer = answer.replace('}}', '}')
+            safe_redis_client_set(f'chain_{prompt_key}', answer)
     return answer
 
 def safe_redis_client_get(redis_key):
