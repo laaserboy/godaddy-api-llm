@@ -5,6 +5,8 @@ This code acts as an interface between an LLM and Godaddy's public API.
 
 # To run
 
+Install Python 3.9 or better
+
 ```
 export GD_KEY=<your Godaddy API key>
 export GD_SECRET=<your Godady API secret>
