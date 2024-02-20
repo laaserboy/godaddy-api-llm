@@ -52,3 +52,4 @@ Werkzeug==3.0.1
 yarl==1.9.4
 zipp==3.17.0
 redis==3.5.3
+jq==1.6.0
