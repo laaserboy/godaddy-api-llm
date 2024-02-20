@@ -55,7 +55,7 @@ def get_message_response(prompt_info):
     headers = {}
     proto = 'http'
     hostname = 'localhost'
-    url = f"{proto}://{hostname}:5001{path}"
+    url = f"{proto}://{hostname}:8001{path}"
     data = {'prompt': prompt}
     timeout = 30.0
     server_name = config['chat_server']
@@ -154,7 +154,7 @@ def call_availcheck(model_response, gd_key, gd_secret):
     headers = {}
     proto = 'http'
     hostname = 'localhost'
-    url = f"{proto}://{hostname}:5001{path}"
+    url = f"{proto}://{hostname}:8001{path}"
     data = {'prompt': second_response_text}
     timeout = 30.0
     response_second = gd_fun.post_data(url, headers, data, timeout)
@@ -179,7 +179,7 @@ def call_suggest(model_response, gd_key, gd_secret):
     headers = {}
     proto = 'http'
     hostname = 'localhost'
-    url = f"{proto}://{hostname}:5001{path}"
+    url = f"{proto}://{hostname}:8001{path}"
     data = {'prompt': second_response_text}
     timeout = 30.0
     response_second = gd_fun.post_data(url, headers, data, timeout)

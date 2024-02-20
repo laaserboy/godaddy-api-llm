@@ -60,7 +60,7 @@ SESSION_DESCRIPTION = '''You are an internet expert.\nRespond only in JSON. Wrap
     ''' + FUNCTIONS_INTERNAL
 
 def get_gpt4all_model_res(prompt):
-    '''Call GPT4All server, which is faster than the port 5001 server'''
+    '''Call GPT4All server, which is faster than the port 8001 server'''
     api_base = 'http://localhost:4891/v1'
     model = 'mistral-7b-openorca.Q4_0'
     headers = {

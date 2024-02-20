@@ -15,7 +15,11 @@ export GD_APP_SECRET_KEY=<random text for flask>
 export GD_RAG_SYSTEM_DIR=<directory with initial JSON RAG document>
 export GD_RAG_USER_DIR=<directory with user JSON RAG document>
 ```
+Download this model.
 
+```
+https://huggingface.co/TheBloke/Mistral-7B-OpenOrca-GGUF/blob/main/mistral-7b-openorca.Q4_0.gguf
+```
 
 Change directory
 
@@ -26,6 +30,8 @@ cd godaddy-api-llm/py/godaddy_api_llm
 Install dependencies
 
 ```
+# Install python 3.9 or better, pip
+
 pip3 install -r requirements.txt
 ```
 
@@ -39,7 +45,7 @@ Go to server
 Open this in your browser.
 
 ```
-http://localhost:5000/
+http://localhost:8000/
 ```
 
 This gives a domain suggestion.

@@ -15,7 +15,7 @@ class TestPromptResponses(unittest.TestCase):
         print(f'result {result}')
 
 
-        server_url = "http://localhost:5001/prompt"
+        server_url = "http://localhost:8001/prompt"
         headers = { }
         cookies = { }
 

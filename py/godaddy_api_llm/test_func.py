@@ -23,7 +23,7 @@ class TestSuggest(unittest.TestCase):
     def test_suggest(self):
         mock_response_content = b'{"expected_total":65510000,"order_id":"2204635159","response":"You may be interested in the suggested domain, \\"bikesandcoffeeincupertino.com\\". This domain combines your interests of bikes and coffee while also referencing Cupertino, a city known for its technology industry. If you would like to purchase this domain name, please let me know."}'
         def model_api_call():
-            url = 'http://localhost:5000/model'
+            url = 'http://localhost:8000/model'
             headers = {
                 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/115.0',
                 'Content-Type': 'application/x-www-form-urlencoded',
