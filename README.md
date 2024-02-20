@@ -30,7 +30,7 @@ cd godaddy-api-llm/py/godaddy_api_llm
 Install dependencies
 
 ```
-# Install python 3.9 or better, pip
+# Install python 3.9 or better, pip, sqlite3 (>= 3.35)
 
 pip3 install -r requirements.txt
 ```

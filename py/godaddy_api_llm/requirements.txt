@@ -53,3 +53,5 @@ yarl==1.9.4
 zipp==3.17.0
 redis==3.5.3
 jq==1.6.0
+sentence-transformers==2.3.1
+chromadb==0.4.22
